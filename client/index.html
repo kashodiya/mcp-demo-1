@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bank Monitoring Organization</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <div v-if="!isAuthenticated">
+        <v-container class="fill-height" fluid>
+          <v-row align="center" justify="center">
+            <v-col cols="12" sm="8" md="4">
+              <v-card>
+                <v-card-title>Login</v-card-title>
+                <v-card-text>
+                  <v-text-field v-model="username" label="Username" class="mb-3"></v-text-field>
+                  <v-text-field v-model="password" label="Password" type="password" @keyup.enter="login"></v-text-field>
+                  <v-btn color="primary" block @click="login">Login</v-btn>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </div>
+      <div v-else>
+        <v-app-bar app color="primary">
+          <v-app-bar-title>BMO - Bank Monitoring Organization</v-app-bar-title>
+          <v-spacer></v-spacer>
+          <v-btn to="/" variant="text" color="white">Home</v-btn>
+          <v-btn to="/about" variant="text" color="white">About</v-btn>
+          <v-btn @click="logout" variant="text" color="white">Logout</v-btn>
+        </v-app-bar>
+        <v-main>
+          <v-container fluid>
+            <router-view></router-view>
+          </v-container>
+        </v-main>
+      </div>
+    </v-app>
+  </div>
+
+  <script type="text/x-template" id="home-template">
+    <v-container fluid class="pa-0" style="height: calc(100vh - 64px);">
+      
+    </v-container>
+  </script>
+
+  <script type="text/x-template" id="about-template">
+    <v-container fluid>
+      <v-row>
+        <v-col cols="12">
+          <h1>About Page</h1>
+          <p>This is the about page.</p>
+        </v-col>
+      </v-row>
+    </v-container>
+  </script>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+
+  <script>
+    const { createApp } = Vue;
+    const { createRouter, createWebHashHistory } = VueRouter;
+    const { createVuetify } = Vuetify;
+
+    const Home = {
+      template: '#home-template',
+      data() {
+        return {
+        }
+      },
+      methods: {
+      },
+      async created() {
+        console.log('Home component created');
+        
+        // WebSocket connection
+        this.ws = new WebSocket(`ws://${window.location.host}/ws`);
+        this.ws.onopen = () => {
+          // Send token immediately after connection
+          let token = localStorage.getItem('token');
+          console.log(`WebSocket connection established. Sending token... ${token}`);
+          this.ws.send(JSON.stringify({ token }));
+        };
+        this.ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'update-form') {
+            console.log('Received form update:', data.payload);
+            const nameVal = JSON.parse(data.payload);
+            if (nameVal.name && nameVal.value !== undefined) {
+              this.updateFormField(nameVal.name, nameVal.value);
+            }
+          }
+        };
+        
+        // try {
+        //   const response = await fetch('/api/start-agent', {
+        //     method: 'GET',
+        //     headers: {
+        //       'Authorization': `Bearer ${localStorage.getItem('token')}`
+        //     }
+        //   });
+        //   if (response.ok) {
+        //     const agentResp = await response.json();
+        //     console.log(agentResp);
+        //     this.addAgentMessage(agentResp.answer);
+        //   } else {
+        //     this.showMessage('Error asking agent to start asking questions', 'error');
+        //   }
+        // } catch (error) {
+        //   console.error('Error:', error);
+        //   this.showMessage('Error asking agent to start asking questions', 'error');
+        // }
+
+      }
+    };
+    const About = { template: '#about-template' };
+
+    const routes = [
+      { path: '/', component: Home },
+      { path: '/about', component: About }
+    ];
+
+    const router = createRouter({
+      history: createWebHashHistory(),
+      routes
+    });
+
+    const vuetify = createVuetify({
+      theme: {
+        defaultTheme: 'light'
+      }
+    });
+
+    createApp({
+      data() {
+        return {
+          isAuthenticated: false,
+          username: '',
+          password: ''
+        }
+      },
+      methods: {
+        async login() {
+          try {
+            const response = await fetch('/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: this.password })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              localStorage.setItem('token', data.token);
+              this.isAuthenticated = true;
+            }
+          } catch (error) {
+            console.error('Login failed:', error);
+          }
+        },
+        async logout() {
+          try {
+            await fetch('/api/logout', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
+          localStorage.removeItem('token');
+          this.isAuthenticated = false;
+          this.password = '';
+        }
+      },
+      created() {
+        this.isAuthenticated = !!localStorage.getItem('token');
+      }
+    })
+      .use(router)
+      .use(vuetify)
+      .mount('#app');
+  </script>
+</body>
+
+</html>
