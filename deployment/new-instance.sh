@@ -18,7 +18,7 @@ mkdir "$new_dir"
 # Clone the repository and install dependencies
 git clone https://github.com/kashodiya/customer-onboarding-ai-agent "$new_dir"
 cd "$new_dir"
-pip install -r requirements.txt
+uv sync
 
 
 # Generate a 6-digit random number string
