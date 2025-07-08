@@ -6,7 +6,7 @@ if [ ! -d "$HOME/apps-bmo" ]; then
 fi
 
 # Find the next available port number
-start_port=7160
+start_port=7170
 while [ -d "$HOME/apps-bmo/$start_port" ]; do
     start_port=$((start_port + 1))
 done
