@@ -14,7 +14,7 @@ A web application for Banks Monitoring Office (BMO) to validate data submitted b
 
 1. **Install Dependencies**:
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. **Initialize Database** (already done):
@@ -24,9 +24,9 @@ A web application for Banks Monitoring Office (BMO) to validate data submitted b
 
 3. **Start Server**:
    ```bash
-   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
-   Or use: `start_server.bat`
+   Or use: `run.bat`
 
 4. **Access Application**:
    Open http://localhost:8000 in your browser

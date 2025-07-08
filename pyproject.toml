@@ -1,0 +1,16 @@
+[project]
+name = "bmo-data-validation"
+version = "0.1.0"
+description = "BMO Data Validation Web Application"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "python-multipart",
+    "langchain-aws",
+    "langchain-mcp-adapters",
+    "langgraph",
+    "boto3",
+    "fastmcp",
+]

@@ -8,6 +8,6 @@ if not defined PASS (
 )
 
 rem Run the uvicorn command
-uvicorn main:app --reload
+uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 :end
