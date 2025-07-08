@@ -11,9 +11,16 @@
 - Users should be able to register comment on any errors. 
 - Users should be able to accept or reject any report.
 
+## Coding guidelines
+- Keep code simple.
+- Add enough console logs to help debugging the app.
+- Keep all the frontend code contained in a single index.html file. 
+- This is a demo application so do not worry about scalability, security and performance.
+
 ## Technology 
 - Frontend is developed using a single HTML page using VueJS, Vuetify and VueRouter. 
 - Backend is developed using Python using FastAPI
+- Use sqlite file based database to store data. Since this is just a demo project, it is ok to put users and their passwords in the database as clear text.
 
 
 You are an expoert Python and VueJS developer. Your task is to 
