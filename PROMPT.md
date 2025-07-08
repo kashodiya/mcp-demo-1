@@ -28,3 +28,9 @@
 - Create 20 fake banks
 - Create 30 fake reports submissions between date Jan 2025 till June 2025.
 - Create some report data validation errors records. Some errors should have a comments, some are blank.
+
+
+## Chatbot feaures
+- User should be able to click on a floating chatbot icon (stored in client/images/chatbot.png) on bottom right, and open a chatbot user interface.
+- When user type and send message, call an API to send it to the server main.py.
+- For now, just echo as a reponse with "Echo: " prefix.

@@ -186,6 +186,13 @@ async def update_report_status(report_id: int, status_data: StatusUpdateRequest,
     print(f"Report {report_id} status updated successfully")
     return {"success": True}
 
+@app.post("/api/chat")
+async def chat(message_data: dict, token: str = Depends(check_auth)):
+    message = message_data.get('message', '')
+    print(f"Received chat message: {message}")
+    response = f"Echo: {message}"
+    return {"response": response}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
