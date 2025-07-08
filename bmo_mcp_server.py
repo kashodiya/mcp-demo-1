@@ -1,61 +1,91 @@
-# Internal FR - Source Code
-from typing import Dict, Any, List, Union
-import os
-import inspect
-# from utils_mcp_server import call_api, replace_placeholders_in_path
-from fastmcp import FastMCP, Client
+from typing import Dict, Any, List, Optional
 import requests
+import sqlite3
+from fastmcp import FastMCP
 
-mcp = FastMCP("BMO MCP Server sam-svc")
+mcp = FastMCP("BMO MCP Server")
+BASE_URL = "http://localhost:8000"
+
+def get_latest_token() -> Optional[str]:
+    """Get the most recent token from sessions table."""
+    try:
+        conn = sqlite3.connect('bmo_data.db')
+        cursor = conn.cursor()
+        result = cursor.execute("SELECT token FROM sessions ORDER BY rowid DESC LIMIT 1").fetchone()
+        conn.close()
+        return result[0] if result else None
+    except Exception:
+        return None
 
 @mcp.tool()
-def get_applications() -> Union[Dict[str, Any], None]: 
-    """
-    Call this method to get list of applications.
-    
-    Returns:
-        The result will be in JSON format.
-    """
+def login_user(username: str, password: str) -> Dict[str, Any]:
+    """Authenticate user and get access token."""
+    try:
+        response = requests.post(f"{BASE_URL}/api/login", json={"username": username, "password": password})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    # Generate a key-val of param names and values of this tool function
-    # Get the current frame
-    frame = inspect.currentframe()
-    # Get the arguments passed to the function
-    args, _, _, values = inspect.getargvalues(frame)
-    # Create a list of key-value pairs
-    # param_values = [(arg, values[arg]) for arg in args if arg != 'self']
-    param_values = {arg: values[arg] for arg in args if arg != 'self'}    
-    # Always clean up the frame to avoid reference cycles
-    del frame    
+@mcp.tool()
+def get_reports() -> List[Dict[str, Any]]:
+    """Get list of all bank reports."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.get(f"{BASE_URL}/api/reports", headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    path = "/applications"
-    http_method = "get"
-    payload = None
-    query_params = None
-    real_path = None
-    parameters = None
+@mcp.tool()
+def get_report_errors(report_id: int) -> List[Dict[str, Any]]:
+    """Get validation errors for a specific report."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.get(f"{BASE_URL}/api/reports/{report_id}/errors", headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    print(f"param_values: {param_values}")
+@mcp.tool()
+def add_error_comment(error_id: int, comment: str) -> Dict[str, Any]:
+    """Add a comment to a validation error."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.post(f"{BASE_URL}/api/errors/{error_id}/comments", json={"comment": comment}, headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    # if len(param_values) > 0:
-    #     real_path = replace_placeholders_in_path(path, parameters, param_values)
-    #     query_params = {param["name"]: param_values[param["var_name"]] for param in parameters if param["in"] == "query"}
-    # else:
-    #     real_path = path
-    #     query_params = []
+@mcp.tool()
+def update_report_status(report_id: int, is_accepted: bool) -> Dict[str, Any]:
+    """Accept or reject a bank report."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.put(f"{BASE_URL}/api/reports/{report_id}/status", json={"is_accepted": is_accepted}, headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    # try:
-    #     result = call_api(real_path, http_method, query_params, payload)
-    #     print(result)
-    #     return result
-    # except requests.RequestException as e:
-    #     print(f"An error occurred: {e}")
-    #     return {"error": e}
-    
-
-
+@mcp.tool()
+def send_chat_message(message: str) -> Dict[str, Any]:
+    """Send a message to the chat system."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.post(f"{BASE_URL}/api/chat", json={"message": message}, headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
-    # mcp.run(transport="stdio")
     mcp.run(transport="sse", port=9008)
     

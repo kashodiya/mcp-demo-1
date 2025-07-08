@@ -38,3 +38,8 @@
 ## MCP Agent
 - mcp_agent.py is a agent that uses Model Context Protocol to use LLM.
 - Convert it to use Bedrock model "anthropic.claude-3-5-sonnet-20240620-v1:0" instead of Ollama.
+
+## MCP tools
+- bmo_mcp_server.py file contains the MCP servers. 
+- main.py is my API server.
+- Create tools in my MCP server based on the api routes.
