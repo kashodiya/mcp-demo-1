@@ -17,11 +17,23 @@ def get_latest_token() -> Optional[str]:
     except Exception:
         return None
 
+# @mcp.tool()
+# def login_user(username: str, password: str) -> Dict[str, Any]:
+#     """Authenticate user and get access token."""
+#     try:
+#         response = requests.post(f"{BASE_URL}/api/login", json={"username": username, "password": password})
+#         return response.json()
+#     except Exception as e:
+#         return {"error": str(e)}
+
 @mcp.tool()
-def login_user(username: str, password: str) -> Dict[str, Any]:
-    """Authenticate user and get access token."""
+def get_banks() -> List[Dict[str, Any]]:
+    """Get list of all banks with their ABA codes and names. If you want to search any bank by name, first get all banks and find matching name in the list."""
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
     try:
-        response = requests.post(f"{BASE_URL}/api/login", json={"username": username, "password": password})
+        response = requests.get(f"{BASE_URL}/api/banks", headers={"Authorization": f"Bearer {token}"})
         return response.json()
     except Exception as e:
         return {"error": str(e)}

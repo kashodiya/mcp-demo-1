@@ -43,3 +43,9 @@
 - bmo_mcp_server.py file contains the MCP servers. 
 - main.py is my API server.
 - Create tools in my MCP server based on the api routes.
+
+
+## Sample MCP questions
+- Do the latest report from sun trust contain errors?
+- Accept the latest report from Union Bnak.
+- How many errors are in the report submitted by US Bank on March 14, 2025. 

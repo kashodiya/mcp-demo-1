@@ -6,6 +6,7 @@ import json
 import random
 from database import init_database, get_db_connection
 from models import LoginRequest, CommentRequest, StatusUpdateRequest
+from mcp_agent import MCPAgent
 
 def load_sessions():
     conn = get_db_connection()
@@ -48,8 +49,28 @@ async def startup_event():
     # Load existing sessions after database is ready
     global active_sessions
     active_sessions = load_sessions()
+    await initialize_agent()
+
     print("BMO Application started successfully")
  
+# Create a single instance of MCPAgent
+agent = MCPAgent()
+
+# Background task to initialize the agent
+async def initialize_agent():
+    await agent.initialize()
+
+# # Startup event to initialize the agent
+# @app.on_event("startup")
+# async def startup_event():
+#     await initialize_agent()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await agent.cleanup()
+
+
+
 # User session data
 user_sessions = {}  # {token: {"user_id": int, "username": str, "websockets": list}}
 active_sessions = set()
@@ -57,7 +78,9 @@ active_sessions = set()
 def check_auth(authorization: str = Header(None)):
     token = authorization.replace("Bearer ", "") if authorization else None
     if not token or token not in active_sessions:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        # Just for testing, allow a default token
+        token = "123456"
+        # raise HTTPException(status_code=401, detail="Not authenticated")
     return token
 
 @app.post("/api/login")
@@ -100,6 +123,21 @@ async def logout(authorization: str = Header(None)):
         remove_session(token)
     print("User logged out successfully")
     return {"success": True}
+
+@app.get("/api/banks")
+async def get_banks(token: str = Depends(check_auth)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    banks = cursor.execute("""
+        SELECT id, aba_code, name
+        FROM banks
+        ORDER BY name
+    """).fetchall()
+    
+    result = [dict(bank) for bank in banks]
+    conn.close()
+    return result
 
 @app.get("/api/reports")
 async def get_reports(token: str = Depends(check_auth)):
@@ -190,7 +228,8 @@ async def update_report_status(report_id: int, status_data: StatusUpdateRequest,
 async def chat(message_data: dict, token: str = Depends(check_auth)):
     message = message_data.get('message', '')
     print(f"Received chat message: {message}")
-    response = f"Echo: {message}"
+    # response = f"Echo: {message}"
+    response = await agent.question(message)
     return {"response": response}
 
 @app.websocket("/ws")
