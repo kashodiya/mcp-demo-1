@@ -34,3 +34,7 @@
 - User should be able to click on a floating chatbot icon (stored in client/images/chatbot.png) on bottom right, and open a chatbot user interface.
 - When user type and send message, call an API to send it to the server main.py.
 - For now, just echo as a reponse with "Echo: " prefix.
+
+## MCP Agent
+- mcp_agent.py is a agent that uses Model Context Protocol to use LLM.
+- Convert it to use Bedrock model "anthropic.claude-3-5-sonnet-20240620-v1:0" instead of Ollama.
