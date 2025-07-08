@@ -2,9 +2,7 @@
 import asyncio
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
-# import ollama
-# from langchain_community.chat_models import ChatOllama
-from langchain_ollama import ChatOllama
+from langchain_aws import ChatBedrock
 from langgraph.checkpoint.memory import InMemorySaver
 import random
 import string
@@ -25,20 +23,7 @@ def generate_random_string(length: int) -> str:
 
 class MCPAgent:
     def __init__(self):
-        # This is quick and simple
-        self.model_name = "qwen2.5:7b" 
-
-        # This is very verbose and explains you how it got the answer
-        # self.model_name = "llama3:70b" 
-
-        # This is very verbose and explains you how it got the answer
-        # self.model_name = "qwen3:14b" 
-
-        # self.model_name = "qwen2.5vl:7b" 
-        # self.model_name = "qwen2.5-coder:7b-instruct" 
-        # self.model_name = "mistral:latest" 
-        # self.model_name = "gemma3:12b" 
-        # self.model_name = "gemma3:4b" 
+        self.model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
         self.client = None
         self.agent = None
         self.config = {
@@ -70,10 +55,13 @@ class MCPAgent:
         for tool in tools:
             print(tool.name)        
 
-        ollama_model = ChatOllama(model=self.model_name)  # Replace with your model name
+        bedrock_model = ChatBedrock(
+            model_id=self.model_id,
+            region_name="us-east-1"  # Change to your preferred region
+        )
 
         self.agent = create_react_agent(
-            model=ollama_model,
+            model=bedrock_model,
             tools=tools,
             checkpointer=checkpointer
         )        

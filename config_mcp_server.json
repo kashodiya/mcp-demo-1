@@ -1,0 +1,6 @@
+{
+  "mcp_server.py": {
+    "url": "http://localhost:9008/sse",
+    "transport": "sse"
+  }
+}
