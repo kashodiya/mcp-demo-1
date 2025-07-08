@@ -79,8 +79,8 @@ def check_auth(authorization: str = Header(None)):
     token = authorization.replace("Bearer ", "") if authorization else None
     if not token or token not in active_sessions:
         # Just for testing, allow a default token
-        token = "123456"
-        # raise HTTPException(status_code=401, detail="Not authenticated")
+        # token = "123456"
+        raise HTTPException(status_code=401, detail="Not authenticated")
     return token
 
 @app.post("/api/login")
@@ -158,6 +158,33 @@ async def get_reports(token: str = Depends(check_auth)):
     print(f"Retrieved {len(result)} reports")
     return result
 
+@app.get("/api/reports/status/{status}")
+async def get_reports_by_status(status: str, token: str = Depends(check_auth)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    if status == "accepted":
+        where_clause = "r.is_accepted = 1"
+    elif status == "rejected":
+        where_clause = "r.is_accepted = 0 AND r.has_errors = 1"
+    elif status == "pending":
+        where_clause = "r.is_accepted IS NULL"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid status. Use: accepted, rejected, or pending")
+    
+    reports = cursor.execute(f"""
+        SELECT r.id, r.report_code, r.submission_date, r.has_errors, r.is_accepted,
+               b.aba_code, b.name as bank_name
+        FROM reports r
+        JOIN banks b ON r.bank_id = b.id
+        WHERE {where_clause}
+        ORDER BY r.submission_date DESC
+    """).fetchall()
+    
+    result = [dict(report) for report in reports]
+    conn.close()
+    return result
+
 @app.get("/api/reports/{report_id}/errors")
 async def get_report_errors(report_id: int, token: str = Depends(check_auth)):
     print(f"Fetching errors for report {report_id}")
@@ -224,12 +251,64 @@ async def update_report_status(report_id: int, status_data: StatusUpdateRequest,
     print(f"Report {report_id} status updated successfully")
     return {"success": True}
 
+@app.post("/api/banks")
+async def create_bank(bank_data: dict, token: str = Depends(check_auth)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "INSERT INTO banks (aba_code, name) VALUES (?, ?)",
+        (bank_data['aba_code'], bank_data['name'])
+    )
+    
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.put("/api/banks/{bank_id}")
+async def update_bank(bank_id: int, bank_data: dict, token: str = Depends(check_auth)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "UPDATE banks SET aba_code = ?, name = ? WHERE id = ?",
+        (bank_data['aba_code'], bank_data['name'], bank_id)
+    )
+    
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.delete("/api/banks/{bank_id}")
+async def delete_bank(bank_id: int, token: str = Depends(check_auth)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check if bank has any reports
+    report_count = cursor.execute(
+        "SELECT COUNT(*) as count FROM reports WHERE bank_id = ?", 
+        (bank_id,)
+    ).fetchone()['count']
+    
+    if report_count > 0:
+        conn.close()
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete bank. It has {report_count} associated report(s)."
+        )
+    
+    cursor.execute("DELETE FROM banks WHERE id = ?", (bank_id,))
+    
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
 @app.post("/api/chat")
 async def chat(message_data: dict, token: str = Depends(check_auth)):
     message = message_data.get('message', '')
     print(f"Received chat message: {message}")
     # response = f"Echo: {message}"
-    response = await agent.question(message)
+    response = await agent.question(message, token)
     return {"response": response}
 
 @app.websocket("/ws")

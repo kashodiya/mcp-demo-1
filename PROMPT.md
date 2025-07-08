@@ -46,6 +46,14 @@
 
 
 ## Sample MCP questions
+- Add comment on the Bank of America report related to calculation error saying please double check the calculations.
 - Do the latest report from sun trust contain errors?
+- How many errors are in the report from Bank of America?
 - Accept the latest report from Union Bnak.
 - How many errors are in the report submitted by US Bank on March 14, 2025. 
+- Get rejected reports
+- The latest report from Capital One Bank contains a validation error for Regulatory Compliance on customer count. Add a comment: Customers count value can not be zero.
+- List reports that do not have errors but are in pending state.
+- List reports that do not have errors but are not still accepted.
+    - Accept those 8 reports
+

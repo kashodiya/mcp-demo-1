@@ -77,12 +77,13 @@ class MCPAgent:
         print(f"New thread id: {new_id}")
         return new_id
 
-    async def question(self, message):
-        print(f"Asking: {message}")
+    async def question(self, message, token):
+        print(f"Asking: {message} usintg token/thread_id: {token}")
+        user_config = {"configurable": {"thread_id": token}}
 
         test_response = await self.agent.ainvoke(
             {"messages": [{"role": "user", "content": message}]},
-            self.config
+            user_config
         )
         return test_response
 

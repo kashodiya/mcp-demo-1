@@ -46,3 +46,11 @@ class CommentRequest(BaseModel):
 
 class StatusUpdateRequest(BaseModel):
     is_accepted: bool
+
+class BankCreateRequest(BaseModel):
+    aba_code: str
+    name: str
+
+class BankUpdateRequest(BaseModel):
+    aba_code: str
+    name: str

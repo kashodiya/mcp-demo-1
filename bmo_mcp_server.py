@@ -51,6 +51,27 @@ def get_reports() -> List[Dict[str, Any]]:
         return {"error": str(e)}
 
 @mcp.tool()
+def get_reports_by_status(status: str) -> List[Dict[str, Any]]:
+    """Get bank reports filtered by status. 
+    
+    Parameters:
+    - status: Report status to filter by. Valid values are:
+        - 'accepted': Reports that have been approved
+        - 'rejected': Reports that have been rejected (have errors and is_accepted=false)
+        - 'pending': Reports that are awaiting review (is_accepted=null)
+    
+    Returns list of reports with bank information including id, report_code, submission_date, has_errors, is_accepted, aba_code, and bank_name.
+    """
+    token = get_latest_token()
+    if not token:
+        return {"error": "No active session found"}
+    try:
+        response = requests.get(f"{BASE_URL}/api/reports/status/{status}", headers={"Authorization": f"Bearer {token}"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool()
 def get_report_errors(report_id: int) -> List[Dict[str, Any]]:
     """Get validation errors for a specific report."""
     token = get_latest_token()
