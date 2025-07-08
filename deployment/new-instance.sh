@@ -16,7 +16,7 @@ new_dir="$HOME/apps-bmo/$start_port"
 mkdir "$new_dir"
 
 # Clone the repository and install dependencies
-git clone https://github.com/kashodiya/customer-onboarding-ai-agent "$new_dir"
+git clone https://github.com/kashodiya/mcp-demo-1.git "$new_dir"
 cd "$new_dir"
 uv sync
 
