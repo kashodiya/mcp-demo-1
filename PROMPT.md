@@ -23,4 +23,8 @@
 - Use sqlite file based database to store data. Since this is just a demo project, it is ok to put users and their passwords in the database as clear text.
 
 
-You are an expoert Python and VueJS developer. Your task is to 
+## Seed data
+- Create sevral users.
+- Create 20 fake banks
+- Create 30 fake reports submissions between date Jan 2025 till June 2025.
+- Create some report data validation errors records. Some errors should have a comments, some are blank.

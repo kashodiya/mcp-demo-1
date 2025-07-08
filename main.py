@@ -1,31 +1,58 @@
 from fastapi import FastAPI, WebSocket, HTTPException, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 import json
-import os
 import random
+from database import init_database, get_db_connection
+from models import LoginRequest, CommentRequest, StatusUpdateRequest
 
-SESSIONS_FILE = "active_sessions.json"
- 
 def load_sessions():
-    try:
-        with open(SESSIONS_FILE, 'r') as f:
-            print(f"Loading active sessions from {SESSIONS_FILE}")
-            return set(json.load(f))
-    except FileNotFoundError:
-        return set()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    tokens = cursor.execute("SELECT token FROM sessions").fetchall()
+    conn.close()
+    return set(row['token'] for row in tokens)
 
-def save_sessions():
-    global active_sessions
-    with open(SESSIONS_FILE, 'w') as f:
-        json.dump(list(active_sessions), f)
+def save_session(token):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO sessions (token) VALUES (?)", (token,))
+    conn.commit()
+    conn.close()
+
+def remove_session(token):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM sessions WHERE token = ?", (token,))
+    conn.commit()
+    conn.close()
 
 # Initialize FastAPI application
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    init_database()
+    
+    # Load existing sessions after database is ready
+    global active_sessions
+    active_sessions = load_sessions()
+    print("BMO Application started successfully")
  
 # User session data
-user_sessions = {}  # {token: {"agent_session_id": str, "form_data": dict, "websockets": list}}
-active_sessions = load_sessions()
+user_sessions = {}  # {token: {"user_id": int, "username": str, "websockets": list}}
+active_sessions = set()
 
 def check_auth(authorization: str = Header(None)):
     token = authorization.replace("Bearer ", "") if authorization else None
@@ -35,18 +62,33 @@ def check_auth(authorization: str = Header(None)):
 
 @app.post("/api/login")
 async def login(credentials: dict):
-    password = os.getenv("PASS", "123456")
-    if credentials.get("password") == password:
+    print(f"Login attempt for username: {credentials.get('username')}")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    user = cursor.execute(
+        "SELECT id, username, password, role FROM users WHERE username = ?", 
+        (credentials.get('username'),)
+    ).fetchone()
+    
+    if user and user['password'] == credentials.get('password'):
         session_token = str(random.randint(100000000, 999999999))
         active_sessions.add(session_token)
         user_sessions[session_token] = {
-            "agent_session_id": str(random.randint(10000000, 99999999)),
-            "form_data": {},
+            "user_id": user['id'],
+            "username": user['username'],
+            "role": user['role'],
             "websockets": []
         }
-        save_sessions()
-        return {"token": session_token, "success": True}
-    raise HTTPException(status_code=401, detail="Invalid password")
+        save_session(session_token)
+        conn.close()
+        print(f"Login successful for user: {user['username']}")
+        return {"token": session_token, "success": True, "user": {"username": user['username'], "role": user['role']}}
+    
+    conn.close()
+    print("Login failed: Invalid credentials")
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @app.post("/api/logout")
 async def logout(authorization: str = Header(None)):
@@ -55,7 +97,93 @@ async def logout(authorization: str = Header(None)):
         active_sessions.remove(token)
         if token in user_sessions:
             del user_sessions[token]
-        save_sessions()
+        remove_session(token)
+    print("User logged out successfully")
+    return {"success": True}
+
+@app.get("/api/reports")
+async def get_reports(token: str = Depends(check_auth)):
+    print("Fetching reports list")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    reports = cursor.execute("""
+        SELECT r.id, r.report_code, r.submission_date, r.has_errors, r.is_accepted,
+               b.aba_code, b.name as bank_name
+        FROM reports r
+        JOIN banks b ON r.bank_id = b.id
+        ORDER BY r.submission_date DESC
+    """).fetchall()
+    
+    result = [dict(report) for report in reports]
+    conn.close()
+    print(f"Retrieved {len(result)} reports")
+    return result
+
+@app.get("/api/reports/{report_id}/errors")
+async def get_report_errors(report_id: int, token: str = Depends(check_auth)):
+    print(f"Fetching errors for report {report_id}")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    errors = cursor.execute("""
+        SELECT ve.id, ve.error_type, ve.error_message, ve.field_name,
+               GROUP_CONCAT(u.username || ': ' || ec.comment || ' (' || ec.created_at || ')', '\n') as comments
+        FROM validation_errors ve
+        LEFT JOIN error_comments ec ON ve.id = ec.error_id
+        LEFT JOIN users u ON ec.user_id = u.id
+        WHERE ve.report_id = ?
+        GROUP BY ve.id
+        ORDER BY ve.id
+    """, (report_id,)).fetchall()
+    
+    result = []
+    for error in errors:
+        error_dict = dict(error)
+        error_dict['comments'] = error_dict['comments'].split('\n') if error_dict['comments'] else []
+        result.append(error_dict)
+    
+    conn.close()
+    print(f"Retrieved {len(result)} errors for report {report_id}")
+    return result
+
+@app.post("/api/errors/{error_id}/comments")
+async def add_error_comment(error_id: int, comment_data: CommentRequest, token: str = Depends(check_auth)):
+    print(f"Adding comment to error {error_id}")
+    
+    if token not in user_sessions:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    user_id = user_sessions[token]['user_id']
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "INSERT INTO error_comments (error_id, user_id, comment) VALUES (?, ?, ?)",
+        (error_id, user_id, comment_data.comment)
+    )
+    
+    conn.commit()
+    conn.close()
+    print(f"Comment added successfully to error {error_id}")
+    return {"success": True}
+
+@app.put("/api/reports/{report_id}/status")
+async def update_report_status(report_id: int, status_data: StatusUpdateRequest, token: str = Depends(check_auth)):
+    print(f"Updating report {report_id} status to {'accepted' if status_data.is_accepted else 'rejected'}")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "UPDATE reports SET is_accepted = ? WHERE id = ?",
+        (status_data.is_accepted, report_id)
+    )
+    
+    conn.commit()
+    conn.close()
+    print(f"Report {report_id} status updated successfully")
     return {"success": True}
 
 @app.websocket("/ws")
@@ -85,7 +213,7 @@ async def websocket_endpoint(websocket: WebSocket):
         return
     
     user_sessions[token]["websockets"].append(websocket)
-    print(f"WebSocket connected for token {token}. Total connections: {len(user_sessions[token]['websockets'])}")
+    print(f"WebSocket connected for user {user_sessions[token]['username']}. Total connections: {len(user_sessions[token]['websockets'])}")
     
     try:
         while True:
@@ -94,8 +222,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"WebSocket error: {e}")
         if token in user_sessions and websocket in user_sessions[token]["websockets"]:
             user_sessions[token]["websockets"].remove(websocket)
-            print(f"WebSocket disconnected for token {token}. Remaining connections: {len(user_sessions[token]['websockets'])}")
+            print(f"WebSocket disconnected for user {user_sessions[token]['username']}. Remaining connections: {len(user_sessions[token]['websockets'])}")
 
 # Mount static files
-# app.mount("/", StaticFiles(directory="client/dist", html=True), name="static")
 app.mount("/", StaticFiles(directory="client", html=True), name="static")
