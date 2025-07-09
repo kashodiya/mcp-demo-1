@@ -11,6 +11,10 @@ run.bat
 
 ### How to reset db
 - Stop servers
-- delete bmo_data.db file
-- run run.bat
 - Run python seed_data.py
+- NOTE that this will delete whole db firt and recreate it. 
+
+
+## How to explore APIs?
+http://localhost:8000/docs
+
