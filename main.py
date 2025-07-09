@@ -233,7 +233,7 @@ async def add_error_comment(error_id: int, comment_data: CommentRequest, token: 
     conn.close()
     print(f"Comment added successfully to error {error_id}")
     return {"success": True}
-
+ 
 @app.put("/api/reports/{report_id}/status")
 async def update_report_status(report_id: int, status_data: StatusUpdateRequest, token: str = Depends(check_auth)):
     print(f"Updating report {report_id} status to {'accepted' if status_data.is_accepted else 'rejected'}")
