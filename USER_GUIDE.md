@@ -26,13 +26,15 @@ The Banks Monitoring Office (BMO) Data Validation Web Application is a comprehen
 ### Test User Accounts
 For demonstration purposes, the following test accounts are available:
 
-| Username   | Password | Role        |
-|------------|----------|-------------|
-| analyst1   | 123456   | Analyst     |
-| analyst2   | 123456   | Analyst     |
-| supervisor | 123456   | Supervisor  |
-| admin      | 123456   | Administrator |
-| reviewer   | 123456   | Reviewer    |
+| Username   | Role        |
+|------------|--------------|
+| analyst1   | Analyst     |
+| analyst2   | Analyst     |
+| supervisor | Supervisor  |
+| admin      | Administrator |
+| reviewer   | Reviewer    |
+
+*Contact your system administrator for login credentials.*
 
 ### Logout
 - Click the **Logout** button in the top navigation bar to end your session
