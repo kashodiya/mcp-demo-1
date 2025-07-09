@@ -45,6 +45,17 @@
 - Create tools in my MCP server based on the api routes.
 
 
+## SQL Runner MCP
+- I want the user to ask questions that can be answered using SQL Queries. 
+- For that, create MCP tool. 
+- The MCP server should fetch complete db schema. 
+- MCP server should expose a tool method that will return complete schema. 
+- This schema will be used by LLM server so that it can generate proper SQL.
+- MCP context should also tell what type of database system it is and what SQL dilect is expected. 
+- Implement methods to fire any SQL statement and expose that as a tool.
+- When you return answer that contains tabular data, ask LLM to format it using Markdown table specifications. 
+- All the MCP tool methods should have detailed description so that LLM can understand.
+
 ## Sample MCP questions
 - Add comment on the Bank of America report related to calculation error saying please double check the calculations.
 - Do the latest report from sun trust contain errors?

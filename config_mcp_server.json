@@ -2,5 +2,9 @@
   "bmo_mcp_server.py": {
     "url": "http://localhost:9008/sse",
     "transport": "sse"
+  },
+  "sql_mcp_server.py": {
+    "url": "http://localhost:9009/sse",
+    "transport": "sse"
   }
 }
