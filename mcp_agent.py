@@ -63,6 +63,7 @@ class MCPAgent:
         self.agent = create_react_agent(
             model=bedrock_model,
             tools=tools,
+            prompt="When you get data from SQL queries or in JSON format, format it as a markdown table.",
             checkpointer=checkpointer
         )        
         print("*** Agent created")
