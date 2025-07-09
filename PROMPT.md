@@ -57,10 +57,10 @@
 - All the MCP tool methods should have detailed description so that LLM can understand.
 
 ## Sample MCP questions
+- Accept the latest report from Union Bnak.
 - Add comment on the Bank of America report related to calculation error saying please double check the calculations.
 - Do the latest report from sun trust contain errors?
 - How many errors are in the report from Bank of America?
-- Accept the latest report from Union Bnak.
 - How many errors are in the report submitted by US Bank on March 14, 2025. 
 - Get rejected reports
 - The latest report from Capital One Bank contains a validation error for Regulatory Compliance on customer count. Add a comment: Customers count value can not be zero.
@@ -76,7 +76,7 @@
 - Why was RPT-2025-8224 report rejected?
 
 ## Sample SQL MCP questions
-- Which bank have the largest numbers of data validation errors?
+- Which bank have the largest numbers of data validation errors? Use SQL.
 - Which bank has submitted most reports?
 - Count errors group by its type
 - Which user has entered most comments on the errors

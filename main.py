@@ -241,6 +241,20 @@ async def update_report_status(report_id: int, status_data: StatusUpdateRequest,
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Check if trying to accept a report with errors
+    if status_data.is_accepted:
+        report = cursor.execute(
+            "SELECT has_errors FROM reports WHERE id = ?", 
+            (report_id,)
+        ).fetchone()
+        
+        if report and report['has_errors']:
+            conn.close()
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot accept report that contains validation errors"
+            )
+    
     cursor.execute(
         "UPDATE reports SET is_accepted = ? WHERE id = ?",
         (status_data.is_accepted, report_id)

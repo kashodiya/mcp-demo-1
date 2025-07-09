@@ -586,7 +586,8 @@
                 this.reports[reportIndex].is_accepted = isAccepted;
               }
             } else {
-              this.showMessage('Error updating report status', 'error');
+              const errorData = await response.json();
+              this.showMessage(errorData.detail || 'Error updating report status', 'error');
             }
           } catch (error) {
             console.error('Error updating report status:', error);
