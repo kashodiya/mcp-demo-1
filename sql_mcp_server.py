@@ -54,12 +54,17 @@ def get_database_schema() -> Dict[str, Any]:
 def execute_sql_query(sql_query: str) -> Dict[str, Any]:
     """Execute SQL queries against BMO SQLite database.
     
-    Supports SELECT, INSERT, UPDATE, DELETE operations.
-    Returns structured results suitable for analysis and markdown table formatting.
+    SECURITY RESTRICTION: Only SELECT, UPDATE, INSERT queries are allowed for data safety.
+    Do not attempt DELETE, DROP, CREATE, ALTER, or TRUNCATE operations.
     
+    Returns structured results suitable for analysis and markdown table formatting.
     For tabular data, format results as markdown tables for better readability.
     """
     try:
+        # Validate only SELECT queries are allowed
+        if not sql_query.strip().upper().startswith('SELECT'):
+            return {"success": False, "error": "Only SELECT queries are allowed for security reasons."}
+        
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(sql_query)
