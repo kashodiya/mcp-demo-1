@@ -72,4 +72,13 @@
 - Change the name of KeyBank to Key Bank
 - Count the total reports that were submitted in the first week of March 2025
 - Count the total reports that were submitted in the first 2 weeks of Jan 2025
+- Approve RPT-2025-3510 report
+- Why was RPT-2025-8224 report rejected?
+
+## Sample SQL MCP questions
+- Which bank have the largest numbers of data validation errors?
+- Which bank has submitted most reports?
+- Count errors group by its type
+- Which user has entered most comments on the errors
+- Reject all reports that have errors and is in pending state using SQL
 
