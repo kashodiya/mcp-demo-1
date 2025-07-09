@@ -82,7 +82,7 @@
         <v-btn
           v-if="!chatOpen"
           @click="chatOpen = true"
-          color="primary"
+          color="orange"
           fab
           style="position: absolute; bottom: 20px; right: 20px; z-index: 1001;"
         >
@@ -116,7 +116,7 @@
           <v-card-actions style="padding: 8px;">
             <v-textarea
               v-model="chatInput"
-              placeholder="Type your message..."
+              placeholder="Type your message...Ctrl+Enter to send"
               density="compact"
               hide-details
               rows="2"

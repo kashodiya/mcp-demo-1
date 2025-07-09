@@ -55,15 +55,19 @@ class MCPAgent:
         for tool in tools:
             print(tool.name)        
 
+        # Read system prompt from file
+        with open('MCP_SYSTEM_PROMPT.md', 'r') as file:
+            system_prompt = file.read().strip()
+
         bedrock_model = ChatBedrock(
             model_id=self.model_id,
             region_name="us-east-1"  # Change to your preferred region
-        )
+        ) 
 
         self.agent = create_react_agent(
             model=bedrock_model,
             tools=tools,
-            prompt="When you get data from SQL queries or in JSON format, format it as a markdown table.",
+            prompt=system_prompt,
             checkpointer=checkpointer
         )        
         print("*** Agent created")
