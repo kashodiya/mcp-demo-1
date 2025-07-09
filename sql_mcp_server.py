@@ -20,6 +20,7 @@ def get_database_schema() -> Dict[str, Any]:
     Returns schema with tables, columns, types, constraints, and relationships.
     Use this before generating SQL queries to ensure accuracy.
     """
+    print("[SQL] Getting complete database schema")
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -50,77 +51,48 @@ def get_database_schema() -> Dict[str, Any]:
     except Exception as e:
         return {"error": str(e)}
 
+def format_as_markdown_table(data: List[Dict], columns: List[str]) -> str:
+    """Convert query results to markdown table format."""
+    if not data or not columns:
+        return "No data to display."
+    
+    header = "| " + " | ".join(columns) + " |"
+    separator = "| " + " | ".join(["---"] * len(columns)) + " |"
+    
+    rows = []
+    for row in data:
+        values = [str(row.get(col, "NULL")) for col in columns]
+        rows.append("| " + " | ".join(values) + " |")
+    
+    return "\n".join([header, separator] + rows) + f"\n\n*{len(data)} row(s) returned*"
+
 @mcp.tool()
-def execute_sql_query(sql_query: str) -> Dict[str, Any]:
-    """Execute SQL queries against BMO SQLite database.
+def execute_sql_query(sql_query: str) -> str:
+    """Execute SQL queries against BMO SQLite database and return results as markdown table.
     
-    SECURITY RESTRICTION: Only SELECT, UPDATE, INSERT queries are allowed for data safety.
-    Do not attempt DELETE, DROP, CREATE, ALTER, or TRUNCATE operations.
-    
-    Returns structured results suitable for analysis and markdown table formatting.
-    For tabular data, format results as markdown tables for better readability.
+    SECURITY RESTRICTION: Only SELECT queries are allowed for data safety.
+    Returns formatted markdown table for better readability.
     """
     try:
-        # Validate only SELECT queries are allowed
-        if not sql_query.strip().upper().startswith('SELECT'):
-            return {"success": False, "error": "Only SELECT queries are allowed for security reasons."}
+        print(f"[SQL] Executing SQL Query: {sql_query}") 
+        # if not sql_query.strip().upper().startswith('SELECT'):
+        #     return "Error: Only SELECT queries are allowed for security reasons."
         
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(sql_query)
         
-        query_type = sql_query.strip().upper().split()[0]
-        
-        if query_type == "SELECT":
-            results = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-            data = [dict(row) for row in results]
-            
-            response = {
-                "success": True,
-                "data": data,
-                "columns": columns,
-                "row_count": len(data)
-            }
-        else:
-            conn.commit()
-            response = {
-                "success": True,
-                "affected_rows": cursor.rowcount
-            }
+        results = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description] if cursor.description else []
+        data = [dict(row) for row in results]
         
         conn.close()
-        return response
+        markdown_table = format_as_markdown_table(data, columns)    
+        print(f"[SQL] Query returned {len(data)} rows")
+        print(markdown_table)
+        return markdown_table
     except Exception as e:
-        return {"success": False, "error": str(e)}
-
-@mcp.tool()
-def format_as_markdown_table(query_results: Dict[str, Any]) -> str:
-    """Convert SQL query results to markdown table format for display.
-    
-    Takes results from execute_sql_query and formats as readable markdown table.
-    """
-    try:
-        if not query_results.get("success"):
-            return f"Error: {query_results.get('error', 'Query failed')}"
-        
-        data = query_results.get("data", [])
-        columns = query_results.get("columns", [])
-        
-        if not data or not columns:
-            return "No data to display."
-        
-        header = "| " + " | ".join(columns) + " |"
-        separator = "| " + " | ".join(["---"] * len(columns)) + " |"
-        
-        rows = []
-        for row in data:
-            values = [str(row.get(col, "NULL")) for col in columns]
-            rows.append("| " + " | ".join(values) + " |")
-        
-        return "\n".join([header, separator] + rows) + f"\n\n*{len(data)} row(s) returned*"
-    except Exception as e:
-        return f"Error formatting table: {str(e)}"
+        return f"Error: {str(e)}"
 
 if __name__ == "__main__":
     mcp.run(transport="sse", port=9009)

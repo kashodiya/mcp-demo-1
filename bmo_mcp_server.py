@@ -54,6 +54,7 @@ def get_banks() -> List[Dict[str, Any]]:
     Note: This returns all active banks in the system. For specific bank searches,
     retrieve the full list and apply client-side filtering.
     """
+    print("[BMO] Getting all banks from the system")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -94,6 +95,7 @@ def get_reports() -> List[Dict[str, Any]]:
     
     For filtered views, use get_reports_by_status() instead.
     """
+    print("[BMO] Retrieving all bank reports")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -115,6 +117,7 @@ def get_reports_by_status(status: str) -> List[Dict[str, Any]]:
     
     Returns list of reports with bank information including id, report_code, submission_date, has_errors, is_accepted, aba_code, and bank_name.
     """
+    print(f"[BMO] Getting reports filtered by status: {status}")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -161,6 +164,7 @@ def get_report_errors(report_id: int) -> List[Dict[str, Any]]:
     3. Use add_error_comment() to add analyst notes
     4. Use update_report_status() to accept/reject after review
     """
+    print(f"[BMO] Getting validation errors for report ID: {report_id}")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -211,6 +215,7 @@ def add_error_comment(error_id: int, comment: str) -> Dict[str, Any]:
     3. Comments become part of the permanent audit record
     4. Banks can view comments to understand required corrections
     """
+    print(f"[BMO] Adding comment to error ID {error_id}: {comment[:50]}...")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -263,6 +268,7 @@ def update_report_status(report_id: int, is_accepted: bool) -> Dict[str, Any]:
     Note: Ensure thorough review of all errors and comments before making final decisions.
     Accepted reports are considered compliant for regulatory purposes.
     """
+    print(f"[BMO] Updating report {report_id} status to: {'ACCEPTED' if is_accepted else 'REJECTED'}")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -295,6 +301,7 @@ def create_bank(aba_code: str, name: str) -> Dict[str, Any]:
     - Registering banks that will start submitting regulatory reports
     - Expanding the list of financial institutions under BMO oversight
     """
+    print(f"[BMO] Creating new bank: {name} (ABA: {aba_code})")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -332,6 +339,7 @@ def update_bank(bank_id: int, aba_code: str, name: str) -> Dict[str, Any]:
     
     Note: Before updating, use get_banks() to retrieve current bank information and confirm the bank_id.
     """
+    print(f"[BMO] Updating bank ID {bank_id}: {name} (ABA: {aba_code})")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -380,6 +388,7 @@ def delete_bank(bank_id: int) -> Dict[str, Any]:
     Note: If deletion fails due to associated reports, consider whether the bank
     should be marked as inactive rather than deleted to preserve historical data.
     """
+    print(f"[BMO] Deleting bank ID: {bank_id}")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
@@ -425,6 +434,7 @@ def send_chat_message(message: str) -> Dict[str, Any]:
     
     Note: Messages are logged and may be subject to compliance monitoring and audit requirements.
     """
+    print(f"[BMO] Sending chat message: {message[:50]}...")
     token = get_latest_token()
     if not token:
         return {"error": "No active session found"}
