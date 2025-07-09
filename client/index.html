@@ -32,6 +32,7 @@
               <v-card>
                 <v-card-title>Login</v-card-title>
                 <v-card-text>
+                  <v-alert v-if="loginError" type="error" class="mb-3">{{ loginError }}</v-alert>
                   <v-text-field v-model="username" label="Username" class="mb-3"></v-text-field>
                   <v-text-field v-model="password" label="Password" type="password" @keyup.enter="login"></v-text-field>
                   <v-btn color="primary" block @click="login">Login</v-btn>
@@ -299,6 +300,18 @@
         </v-card>
       </v-dialog>
       
+      <v-dialog v-model="confirmDialog" max-width="400px">
+        <v-card>
+          <v-card-title>Confirm Action</v-card-title>
+          <v-card-text>{{ confirmText }}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="confirmDialog = false; confirmResolve(false)">Cancel</v-btn>
+            <v-btn color="error" @click="confirmDialog = false; confirmResolve(true)">Confirm</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      
       <v-snackbar v-model="snackbar" :color="snackbarColor">
         {{ snackbarText }}
       </v-snackbar>
@@ -352,6 +365,19 @@
             <v-spacer></v-spacer>
             <v-btn @click="dialog = false">Cancel</v-btn>
             <v-btn color="primary" @click="saveBank">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      
+      <!-- Confirmation Dialog -->
+      <v-dialog v-model="confirmDialog" max-width="400px">
+        <v-card>
+          <v-card-title>Confirm Delete</v-card-title>
+          <v-card-text>{{ confirmText }}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="confirmDialog = false; confirmResolve(false)">Cancel</v-btn>
+            <v-btn color="error" @click="confirmDialog = false; confirmResolve(true)">Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -575,6 +601,9 @@
           snackbar: false,
           snackbarText: '',
           snackbarColor: 'success',
+          confirmDialog: false,
+          confirmText: '',
+          confirmResolve: null,
           headers: [
             { title: 'ABA Code', key: 'aba_code' },
             { title: 'Bank Name', key: 'name' },
@@ -631,7 +660,7 @@
           }
         },
         async deleteBank(bank) {
-          if (confirm(`Delete ${bank.name}?`)) {
+          if (await this.confirmDelete(bank.name)) {
             try {
               const response = await fetch(`/api/banks/${bank.id}`, {
                 method: 'DELETE',
@@ -641,6 +670,9 @@
               if (response.ok) {
                 this.showMessage('Bank deleted successfully');
                 this.fetchBanks();
+              } else {
+                const errorData = await response.json();
+                this.showMessage(errorData.detail || 'Error deleting bank', 'error');
               }
             } catch (error) {
               this.showMessage('Error deleting bank', 'error');
@@ -651,6 +683,13 @@
           this.snackbarText = text;
           this.snackbarColor = color;
           this.snackbar = true;
+        },
+        confirmDelete(bankName) {
+          return new Promise((resolve) => {
+            this.confirmText = `Delete ${bankName}?`;
+            this.confirmResolve = resolve;
+            this.confirmDialog = true;
+          });
         }
       },
       async created() {
@@ -681,6 +720,7 @@
           isAuthenticated: false,
           username: '',
           password: '',
+          loginError: '',
           chatOpen: false,
           chatInput: '',
           chatMessages: [],
@@ -708,14 +748,15 @@
               console.log('Login successful for:', data.user.username);
             } else {
               console.error('Login failed: Invalid credentials');
-              alert('Invalid username or password');
+              this.loginError = 'Invalid username or password';
             }
           } catch (error) {
             console.error('Login failed:', error);
-            alert('Login error occurred');
+            this.loginError = 'Login error occurred';
           }
         },
         async logout() {
+          this.loginError = '';
           try {
             await fetch('/api/logout', {
               method: 'POST',

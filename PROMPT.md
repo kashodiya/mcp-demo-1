@@ -56,4 +56,9 @@
 - List reports that do not have errors but are in pending state.
 - List reports that do not have errors but are not still accepted.
     - Accept those 8 reports
+- Delete citi bank
+- Add bank 123123345, Sophia Bank
+- Change the name of KeyBank to Key Bank
+- Count the total reports that were submitted in the first week of March 2025
+- Count the total reports that were submitted in the first 2 weeks of Jan 2025
 
