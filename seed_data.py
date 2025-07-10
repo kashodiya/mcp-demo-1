@@ -29,6 +29,14 @@ def seed_database():
         users = [
             ('analyst1', '123456', 'analyst'),
             ('analyst2', '123456', 'analyst'),
+            ('analyst3', '123456', 'analyst'),
+            ('analyst4', '123456', 'analyst'),
+            ('analyst5', '123456', 'analyst'),
+            ('analyst6', '123456', 'analyst'),
+            ('analyst7', '123456', 'analyst'),
+            ('analyst8', '123456', 'analyst'),
+            ('analyst9', '123456', 'analyst'),
+            ('analyst0', '123456', 'analyst'),
             ('supervisor', '123456', 'supervisor'),
             ('admin', '123456', 'admin'),
             ('reviewer', '123456', 'reviewer')
