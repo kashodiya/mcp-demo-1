@@ -1,0 +1,2 @@
+- This is a demo project to showcase power of MCP
+- A fictitious org BMO (Bnak Monitoring Organizaion) collects data from banks and validate the data. Analysts look at validation errors and add their comments. 
