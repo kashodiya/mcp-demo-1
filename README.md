@@ -23,10 +23,14 @@ A web application for Banks Monitoring Office (BMO) to validate data submitted b
    ```
 
 3. **Start Server**:
-   ```bash
-   uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   - Run MCP servers
+   ```cmd
+   run_mcp_server.bat
    ```
-   Or use: `run.bat`
+   - Run web app
+   ```cmd
+   run.bat
+   ```
 
 4. **Access Application**:
    Open http://localhost:8000 in your browser
